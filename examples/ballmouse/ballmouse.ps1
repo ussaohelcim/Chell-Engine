@@ -1,4 +1,4 @@
-Add-Type -Path "D:\20221\projetosGit\gameengine\ps1\GameEngine.dll"
+Add-Type -Path ".\GameEngine.dll"
 
 #$caminhoCSC = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
 #$argumentos = "/target:library"
