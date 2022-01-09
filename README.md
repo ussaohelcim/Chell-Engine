@@ -25,3 +25,7 @@ To build by yourself just clone this repository and run `.\build_stuff\buildever
 # Ball Mouse demonstration
 
 https://user-images.githubusercontent.com/57050328/148623945-079607ff-a5dd-4c5e-9d81-9136c6621bcb.mp4
+
+# Games
+
+Pong: https://github.com/ussaohelcim/PowerPong
