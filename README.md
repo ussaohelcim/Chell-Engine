@@ -28,4 +28,4 @@ https://user-images.githubusercontent.com/57050328/148623945-079607ff-a5dd-4c5e-
 
 # Games
 
-Pong: https://github.com/ussaohelcim/PowerPong
+PowerPong: https://github.com/ussaohelcim/PowerPong
