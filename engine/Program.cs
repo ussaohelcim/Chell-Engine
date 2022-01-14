@@ -12,6 +12,20 @@ namespace engine
         
         public Functions() {}
 
+        public void EnableAudioDevice()
+        {
+            Raylib.InitAudioDevice();
+        }
+
+        public Sound LoadSoundFromFile(string path)
+        {
+            return Raylib.LoadSound(path);
+        }   
+        public void PlayThisSound(Sound sound)
+        {
+            Raylib.PlaySound(sound);
+        }
+
         public void CreateWindow(int largura, int altura, string tiulo)
         {
             Raylib.InitWindow(largura, altura, tiulo);
@@ -118,40 +132,115 @@ namespace engine
         {
             return IsKeyPressed(KeyboardKey.KEY_SPACE);
         }
+        public Model GetMesh(string path)
+        {
+            return LoadModel(path);
+        }
+        public void StartMode3D(Cam3D cam)
+        {
+            Raylib.BeginMode3D(cam.camera);
+        }
+        public void FinishMode3D()
+        {
+            Raylib.EndMode3D();
+        }
+        public void CameraUpdate(Cam3D cam)
+        {
+            UpdateCamera(ref cam.camera);
+        }
+        public void SetModeCamera(Cam3D cam)
+        {
+            Raylib.SetCameraMode(cam.camera,CameraMode.CAMERA_FREE);
+            
+        }
+        public void ShowGrid()
+        {
+            Raylib.DrawGrid(20,10);
+        }
+        public void SetIcon(string iconPath)
+        {
+            Image img = LoadImage(iconPath);
+            Raylib.SetWindowIcon(img);
+            //Raylib.SetWindowState(Con)
+        }
+        public void SetPositionWindow(int x, int y)
+        {
+            Raylib.SetWindowPosition(x,y);
+        }   
+        public void SetWinSize(int width, int height)
+        {
+            Raylib.SetWindowSize(width,height);
+        
+        }
     }
     public class Program
     {
-        public static void Main()
+        public static void Main() {  }
+    }
+    public class Object3D
+    {
+        public Model model;
+
+        public Vector3 position;
+        Vector3 rotation;
+        Texture2D texture;
+        public float size;
+
+        public Object3D(Model model)
         {
-            // Funcoes funcoes = new Funcoes();
-            // funcoes.Desenhar();
-            // Functions engine = new Functions();
-
-            // Ball2D bola = new Ball2D(200,150,10,200,0,0,250);
-
-            // Rectangle2D raqueteEsquerda = new Rectangle2D(380,150,20,50,0,254,0,254);
-            // Rectangle2D raqueteDireita = new Rectangle2D(0,150, 20,50,0,0,254,254);
-
-            // engine.CreateWindow(400,300,"Pong");
-
-            // while(!engine.IsAskingToCloseWindow())
-            // {
-            //     engine.DrawFrame();
-
-            //     bola.Draw();
-            //     raqueteDireita.Draw();
-            //     raqueteEsquerda.Draw();
-
-            //     bola.posX = engine.MousePosX();
-            //     bola.posY = engine.MousePosY();
-
-                
-
-            //     engine.ClearFrameBackground();
-
-            //     engine.ClearFrame();
-            // }
-            // engine.CloseWindow();
+            this.model = model;
+            this.size = 1;
+            this.position = new Vector3(0,0,0);
+        }
+        public Object3D(Model model,float scale, float x, float y, float z)
+        {
+            this.model = model;
+            this.position = new Vector3(x,y,z);
+        }
+        public static Object3D GetNew(Model model,float scale, float x, float y, float z)
+        {
+            return new Object3D(model,scale,x,y,z);
+        }
+        public static Object3D GetNew(Model model)
+        {
+            return new Object3D(model);
+        }
+        public void Draw()
+        {
+            Raylib.DrawModel(this.model, this.position, size, Color.WHITE);
+        }
+        public void DrawWire()
+        {
+            Raylib.DrawModelWires(this.model,this.position,this.size,Color.GREEN);
+        }
+        public void Rotate(float x, float y, float z)
+        {
+            model.transform = Raymath.MatrixRotateXYZ(new Vector3(x * DEG2RAD, y* DEG2RAD,z* DEG2RAD));
+        }
+    }
+    public class Cam3D
+    {
+        public Camera3D camera;
+        public Cam3D(float fovY)
+        {
+            camera = new Camera3D();
+            camera.fovy = 90;
+            camera.up = Vector3.UnitY;
+            camera.projection = CameraProjection.CAMERA_PERSPECTIVE;
+            camera.target = Vector3.Zero;
+        }
+        public void Rotate(float x, float y, float z)
+        {
+            Quaternion q = Quaternion.CreateFromYawPitchRoll(x,y,z);
+            //camera.position = Raymath.MatrixRotateXYZ(new Vector3(x * DEG2RAD, y* DEG2RAD,z* DEG2RAD)) * camera.position;
+        }
+        public void Move(float x, float y, float z)
+        {
+            camera.position += new Vector3(x,y,z);
+        }
+        public static Cam3D GetNew(float fovY)
+        {
+            return new Cam3D(fovY);
         }
     }
     public class Point2D : IPosicoes2D
