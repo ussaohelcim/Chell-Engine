@@ -20,6 +20,24 @@ $engine = New-Object engine.Functions
 
 # make your code here :]
 
+#$engine.EnableAudioDevice() #need to enable this to be enable to load sounds
+
+#$engine.CreateWindow(width,height,"title")
+
+#[Raylib_cs.Sound]$sound = $engine.LoadSoundFromFile("assets\sounds\sfx.wav")
+
+#while(!$engine.IsAskingToCloseWindow()) {
+
+#$engine.DrawFrame();
+
+    #draw objects
+
+#$engine.ClearFrameBackground();
+
+#$engine.ClearFrame();
+#}
+
+#$engine.CloseWindow();
 '@
 
 Set-Content ".\ChellEngine\main.ps1" $shit
