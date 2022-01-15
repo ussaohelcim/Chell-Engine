@@ -72,7 +72,13 @@ namespace engine
         {
             return IsMouseButtonPressed(MouseButton.MOUSE_RIGHT_BUTTON);
         }
-        
+        public bool IsHoldingKey(char key)
+        {
+            char k = Char.ToUpper(key);
+            return Raylib.IsKeyDown((KeyboardKey)k);
+            //KeyboardKey k = KeyboardKey.KEY_K;
+            //return false;
+        }
         public bool SegurandoW()
         {
             return IsKeyDown(KeyboardKey.KEY_W);
@@ -80,6 +86,14 @@ namespace engine
         public bool SegurandoS()
         {
             return IsKeyDown(KeyboardKey.KEY_S);
+        }
+        public bool SegurandoA()
+        {
+            return IsKeyDown(KeyboardKey.KEY_A);
+        }
+        public bool SegurandoD()
+        {
+            return IsKeyDown(KeyboardKey.KEY_D);
         }
         public bool SegurandoCima()
         {
@@ -144,6 +158,16 @@ namespace engine
         {
             Raylib.EndMode3D();
         }
+        public void StartMode2D(Cam2D cam)
+        {
+            Raylib.BeginMode2D(cam.camera);
+        }
+        public void FinishMode2D()
+        {
+            Raylib.EndMode2D();
+        }
+
+        
         public void CameraUpdate(Cam3D cam)
         {
             UpdateCamera(ref cam.camera);
@@ -172,6 +196,15 @@ namespace engine
             Raylib.SetWindowSize(width,height);
         
         }
+        public Vector2 GetNewVector2(float x, float y)
+        {
+            return new Vector2(x,y);
+        }
+        public Vector3 GetNewVector3(float x, float y, float z)
+        {
+            return new Vector3(x,y,z);
+        }
+
     }
     public class Program
     {
@@ -241,6 +274,42 @@ namespace engine
         public static Cam3D GetNew(float fovY)
         {
             return new Cam3D(fovY);
+        }
+    }
+    public class Cam2D
+    {
+        public Camera2D camera;
+        public Cam2D(Vector2 target, Vector2 offset,  float zoom, float rotation)
+        {
+            Camera2D a = new Camera2D();
+            a.offset = offset;
+            a.zoom = zoom;
+            a.target = target;
+            a.rotation = rotation;
+        }
+        public void MoveOffset(float x, float y)
+        {
+            camera.offset += new Vector2(x,y);
+        }
+        public void UpdateZoom(float zoom)
+        {
+            camera.zoom = zoom;
+        }
+        public void UpdateRotation(float rotation)
+        {
+            camera.rotation = rotation;
+        }
+        public void UpdateOffset(float x, float y)
+        {
+            camera.offset = new Vector2(x,y);
+        }
+        public void UpdateTarget(Vector2 target)
+        {
+            camera.target = target;
+        }
+        public static Cam2D GetNew(Vector2 target, Vector2 offset,  float zoom, float rotation)
+        {
+            return new Cam2D(target,offset,zoom,rotation);
         }
     }
     public class Point2D : IPosicoes2D
