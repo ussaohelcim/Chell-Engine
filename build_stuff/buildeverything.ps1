@@ -1,6 +1,6 @@
 #dotnet publish -r linux-x64
 
-$op = Read-Host "'l': linux64, 'w': windows64"
+#$op = Read-Host "'l': linux64, 'w': windows64"
 
 dotnet publish "..\engine\" --output ".\temp\"
 
@@ -8,19 +8,13 @@ Write-Host "Creating ChellEngine folder..."
 New-Item "ChellEngine" -ItemType Directory
 
 #Copy-Item "..\raylib\raylib.dll" -Destination ".\ChellEngine\"
-#Copy-Item ".\temp\engine.dll" -Destination ".\ChellEngine\"
-#Copy-Item ".\temp\Raylib-cs.dll" -Destination ".\ChellEngine\"
+Copy-Item ".\temp\engine.dll" -Destination ".\ChellEngine\"
+Copy-Item ".\temp\Raylib-cs.dll" -Destination ".\ChellEngine\"
 
-if($op -eq 'l')
-{
-    Copy-Item "..\raylib\linux64\libraylib.so" -Destination ".\ChellEngine\"
-    Copy-Item "..\raylib\linux64\libraylib.so.3.7.0" -Destination ".\ChellEngine\"
-    Copy-Item "..\raylib\linux64\libraylib.so.370" -Destination ".\ChellEngine\"
-}
-elseif($op -eq 'w')
-{
-    Copy-Item "..\raylib\windows64\raylib.dll" -Destination ".\ChellEngine\"
-}
+Copy-Item "..\raylib\linux64\libraylib.so" -Destination ".\ChellEngine\"
+Copy-Item "..\raylib\linux64\libraylib.so.3.7.0" -Destination ".\ChellEngine\"
+Copy-Item "..\raylib\linux64\libraylib.so.370" -Destination ".\ChellEngine\"
+Copy-Item "..\raylib\windows64\raylib.dll" -Destination ".\ChellEngine\"
 
 Remove-Item ".\temp\" -Force -Recurse
 
