@@ -191,6 +191,10 @@ namespace engine
         {
             return new Vector3(x,y,z);
         }
+        public Sprite GetNewSprite(string path)
+        {
+            return new Sprite(path);
+        }
 
     }
     public class Program
@@ -307,24 +311,22 @@ namespace engine
 		public int PosY { get; set; }
 
     }
-    public class Sprite : IControle, IPosicoes2D
+    public class Sprite : IControle
     {
-        Texture2D textura;
-        Rectangle retangulo;
+        public Texture2D textura;
+        //Rectangle retangulo;
+        public Rectangle2D rectangle;
 
 
-        public Sprite(string path, int largula, int altura)
+        public Sprite(string path)
         {
-            PosX = 0;
-            PosY = 0;
-            textura = LoadTexture(path);
-            retangulo = new Rectangle(0,0,largula,altura);
+            Image img = LoadImage(path);
+            textura = LoadTextureFromImage(img);
+            UnloadImage(img);
+            rectangle = new Rectangle2D(textura.width,textura.height,254,254,254,254);
+            
         }
         
-
-		public int PosX { get; set; }
-		public int PosY { get; set; }
-
 		public void Destroy()
 		{
 			throw new NotImplementedException();
@@ -332,18 +334,19 @@ namespace engine
 
 		public void Draw()
 		{
-			DrawTexture(textura, PosX, PosY, Color.WHITE);
+            //DrawTextureEx(textura,)
+			DrawTexture(textura, rectangle.PosX, rectangle.PosY, Color.WHITE);
 		}
         public void UpdatePosition(int x, int y)
         {
-            PosX= x;
-            PosY= y;
+            rectangle.PosX= x;
+            rectangle.PosY= y;
         }
 
 		public void Move(int x, int y)
 		{
-			PosX+= x;
-            PosY+= y;
+			rectangle.PosX += x;
+            rectangle.PosY += y;
 		}
 	}
     public class Ball2D : IControle
@@ -419,13 +422,13 @@ namespace engine
         
 		public int PosX { get; set; }
 		public int PosY { get; set; }
-        public int largura, altura;
+        public int width, height;
         Color cor;
         public Rectangle rect;
         public Rectangle2D(int largura, int altura, int r, int g, int b, int a )
         {
-            this.largura = largura;
-            this.altura = altura;
+            this.width = largura;
+            this.height = altura;
             PosY = 0;
             PosX = 0;
             
@@ -436,8 +439,8 @@ namespace engine
         {
             PosX = x;
             PosY = y;
-            this.largura = largura;
-            this.altura = altura;
+            this.width = largura;
+            this.height = altura;
             cor = new Color(r,g,b,a);
         }
         public bool IsCollidingWithBall2D(Ball2D ball)
@@ -446,10 +449,10 @@ namespace engine
         }
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle)
         {
-            if( this.PosX + this.largura >= rectangle.PosX &&
-                this.PosX <= rectangle.PosX + rectangle.largura &&
-                this.PosY + this.altura >= rectangle.PosY &&
-                this.PosY <= rectangle.PosY + rectangle.altura
+            if( this.PosX + this.width >= rectangle.PosX &&
+                this.PosX <= rectangle.PosX + rectangle.width &&
+                this.PosY + this.height >= rectangle.PosY &&
+                this.PosY <= rectangle.PosY + rectangle.height
             )
             {
                 return true;
@@ -464,9 +467,14 @@ namespace engine
 
 		public void Draw()
 		{
-			DrawRectangle(PosX,PosY,largura,altura,cor);
-            DrawRectangleLinesEx(this.rect,10,Color.GREEN);
+			DrawRectangle(PosX,PosY,width,height,cor);
+            
+            //DrawRectangleLinesEx(this.rect,10,Color.GREEN);
 		}
+        public void DrawLines()
+        {
+            DrawRectangleLines(PosX,PosY,width,height,cor);
+        }   
 
 		public void Move(int x, int y)
 		{
@@ -484,7 +492,6 @@ namespace engine
     {
         public void Move(int x, int y);
         public void Draw();
-        public void Destroy();
     }
     public interface IPosicoes2D
     {
