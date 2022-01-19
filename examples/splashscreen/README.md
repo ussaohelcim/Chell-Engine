@@ -1,0 +1,1 @@
+You need adminstration privilegies to open files.
