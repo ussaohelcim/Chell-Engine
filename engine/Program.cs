@@ -79,21 +79,10 @@ namespace engine
             //KeyboardKey k = KeyboardKey.KEY_K;
             //return false;
         }
-        public bool SegurandoW()
+        public bool KeyPressed(char key)
         {
-            return IsKeyDown(KeyboardKey.KEY_W);
-        }
-        public bool SegurandoS()
-        {
-            return IsKeyDown(KeyboardKey.KEY_S);
-        }
-        public bool SegurandoA()
-        {
-            return IsKeyDown(KeyboardKey.KEY_A);
-        }
-        public bool SegurandoD()
-        {
-            return IsKeyDown(KeyboardKey.KEY_D);
+            char k = Char.ToUpper(key);
+            return Raylib.IsKeyPressed((KeyboardKey)k);
         }
         public bool SegurandoCima()
         {
@@ -117,18 +106,7 @@ namespace engine
         {
             Raylib.DrawText(txt,x,y,textSize,Color.BLACK);
         }
-        public bool ApertouW()
-        {
-            return IsKeyPressed(KeyboardKey.KEY_W);
-        }
-        public bool ApertouA()
-        {
-            return IsKeyPressed(KeyboardKey.KEY_A);
-        }
-        public bool ApertouS()
-        {
-            return IsKeyPressed(KeyboardKey.KEY_S);
-        }
+
         public bool ApertouBaixo()
         {
             return IsKeyPressed(KeyboardKey.KEY_DOWN);
@@ -187,6 +165,11 @@ namespace engine
             Raylib.SetWindowIcon(img);
             //Raylib.SetWindowState(Con)
         }
+        public void SetTitleWindow(string txt)
+        {
+            Raylib.SetWindowTitle(txt);
+
+        }
         public void SetPositionWindow(int x, int y)
         {
             Raylib.SetWindowPosition(x,y);
@@ -195,6 +178,10 @@ namespace engine
         {
             Raylib.SetWindowSize(width,height);
         
+        }
+        public Color GetNewColor(int r, int g, int b, int a)
+        {
+            return new Color(r,g,b,a);
         }
         public Vector2 GetNewVector2(float x, float y)
         {
@@ -281,12 +268,14 @@ namespace engine
         public Camera2D camera;
         public Cam2D(Vector2 target, Vector2 offset,  float zoom, float rotation)
         {
+        
             Camera2D a = new Camera2D();
             a.offset = offset;
             a.zoom = zoom;
             a.target = target;
             a.rotation = rotation;
         }
+
         public void MoveOffset(float x, float y)
         {
             camera.offset += new Vector2(x,y);
@@ -345,10 +334,16 @@ namespace engine
 		{
 			DrawTexture(textura, PosX, PosY, Color.WHITE);
 		}
+        public void UpdatePosition(int x, int y)
+        {
+            PosX= x;
+            PosY= y;
+        }
 
 		public void Move(int x, int y)
 		{
-			throw new NotImplementedException();
+			PosX+= x;
+            PosY+= y;
 		}
 	}
     public class Ball2D : IControle
@@ -370,6 +365,10 @@ namespace engine
         public void Draw()
         {
             Raylib.DrawCircle(posX,posY,radius,cor);
+        }
+        public void DrawLine()
+        {
+            Raylib.DrawCircleLines(posX,posY,radius,cor);
         }
 
         public void Move(int x, int y)
