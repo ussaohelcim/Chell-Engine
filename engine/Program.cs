@@ -195,6 +195,18 @@ namespace engine
         {
             return new Sprite(path);
         }
+        public Vector2 AngleToNormalizedVector(float angle)
+        {
+            return new Vector2(MathF.Cos(angle),MathF.Sin(angle));
+        }
+        public float NormalizedVectorToAngle(Vector2 normalizedVector)
+        {
+            return MathF.Atan2(normalizedVector.Y,normalizedVector.X);
+        }
+        public float DeltaTime()
+        {
+            return Raylib.GetFrameTime();
+        }
 
     }
     public class Program
@@ -471,9 +483,9 @@ namespace engine
             
             //DrawRectangleLinesEx(this.rect,10,Color.GREEN);
 		}
-        public void DrawLines()
+        public void DrawLines(Color color)
         {
-            DrawRectangleLines(PosX,PosY,width,height,cor);
+            DrawRectangleLines(PosX,PosY,width,height,color);
         }   
 
 		public void Move(int x, int y)
