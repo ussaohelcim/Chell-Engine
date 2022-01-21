@@ -1,0 +1,1 @@
+Little thing i made to learn more about math.
