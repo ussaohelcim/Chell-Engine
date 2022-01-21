@@ -195,6 +195,18 @@ namespace engine
         {
             return new Sprite(path);
         }
+        public Rectangle2D GetNewRectangle2D(float x, float y, float width, float height, Color color)
+        {
+            return new Rectangle2D(x,y,width,height,color.r,color.g,color.b,color.a);
+        }
+        public Line2D GetNewLine2D(Vector2 p1, Vector2 p2)
+        {
+            return new Line2D(p1,p2);
+        }
+        public Point2D GetNewPoint2D(Vector2 pos)
+        {
+            return new Point2D(pos);
+        }
         public Vector2 AngleToNormalizedVector(float angle)
         {
             return new Vector2(MathF.Cos(angle),MathF.Sin(angle));
@@ -209,10 +221,7 @@ namespace engine
         }
 
     }
-    public class Program
-    {
-        public static void Main() {  }
-    }
+    public class Program { public static void Main() { Console.WriteLine("hahahahahaha?"); } }
     public class Object3D
     {
         public Model model;
@@ -284,7 +293,6 @@ namespace engine
         public Camera2D camera;
         public Cam2D(Vector2 target, Vector2 offset,  float zoom, float rotation)
         {
-        
             Camera2D a = new Camera2D();
             a.offset = offset;
             a.zoom = zoom;
@@ -317,18 +325,59 @@ namespace engine
             return new Cam2D(target,offset,zoom,rotation);
         }
     }
-    public class Point2D : IPosicoes2D
+    public class Point2D : IControler, IColisions2D
     {
-        public int PosX { get; set; }
-		public int PosY { get; set; }
+        public Vector2 position { get; set; } 
+        public Point2D(Vector2 pos)
+        {
+            position = pos;
+        }
+        public void Move(float x, float y)
+        {
+            position += new Vector2(x,y);
+        }
+        public void Draw()
+        {
+            Raylib.DrawCircleV(position,2,Color.BLACK);
+        }
 
+		public bool IsCollidingWithBall2D(Ball2D ball)
+		{
+			throw new NotImplementedException();
+		}
+
+		public bool IsCollidingWithRectangle2D(Rectangle2D rectangle)
+		{
+            Rectangle rect = new Rectangle(rectangle.position.X, rectangle.position.Y, rectangle.width, rectangle.height);
+            return Raylib.CheckCollisionPointRec(position, rect);
+		}
+	}
+    public class Line2D
+    {
+        public Point2D p1, p2;
+
+        public Line2D( Vector2 p1, Vector2 p2)
+        {
+            this.p1 = new Point2D(p1);
+            this.p2 = new Point2D(p2);
+        }
+        public void Draw(Color color)
+        {
+            
+            Raylib.DrawLineV( p1.position, p2.position, color);
+        }
+        public void DrawThick(Color color, float thick)
+        {
+            Raylib.DrawLineEx(p1.position, p2.position, thick, color);
+        }
     }
-    public class Sprite : IControle
+    public class Sprite : IControler
     {
         public Texture2D textura;
         //Rectangle retangulo;
         public Rectangle2D rectangle;
-
+        public float rotation=0, scale=1;
+        public Vector2 position { get; set; } 
 
         public Sprite(string path)
         {
@@ -347,51 +396,57 @@ namespace engine
 		public void Draw()
 		{
             //DrawTextureEx(textura,)
-			DrawTexture(textura, rectangle.PosX, rectangle.PosY, Color.WHITE);
+            // Vector2 pos = new Vector2(rectangle.PosX,rectangle.PosY);
+			//DrawTexture(textura, , , Color.WHITE);
+            Raylib.DrawTextureEx(textura, rectangle.position, rotation, scale, Color.WHITE);
 		}
         public void UpdatePosition(int x, int y)
         {
-            rectangle.PosX= x;
-            rectangle.PosY= y;
+            rectangle.position = new Vector2(x,y);
+            // rectangle.PosX= x;
+            // rectangle.PosY= y;
         }
 
-		public void Move(int x, int y)
+		public void Move(float x, float y)
 		{
-			rectangle.PosX += x;
-            rectangle.PosY += y;
+            rectangle.position += new Vector2(x,y);
+			// rectangle.PosX += x;
+            // rectangle.PosY += y;
 		}
 	}
-    public class Ball2D : IControle
+    public class Ball2D : IControler
     {
-        public int posX, posY, radius;
-        public Vector2 center;
-        
+        public float radius;
+        public Vector2 position { get; set; } 
         public Color cor; //public Color(int r, int g, int b, int a);
        
 
-        public Ball2D(int x, int y, int radius, int r, int g, int b, int a )
+        public Ball2D(float x, float y, float radius, int r, int g, int b, int a )
         {
-            posX = x;
-            posY = y;
             this.radius = radius;
-            center = new Vector2(x,y);
+            position = new Vector2(x,y);
             cor = new Color(r,g,b,a);
         }
         public void Draw()
         {
-            Raylib.DrawCircle(posX,posY,radius,cor);
-        }
-        public void DrawLine()
-        {
-            Raylib.DrawCircleLines(posX,posY,radius,cor);
-        }
 
-        public void Move(int x, int y)
+            Raylib.DrawCircleV(position,radius,cor);
+ 
+        }
+        // public void DrawLine()
+        // {
+        //     Raylib.DrawCircleLines(position.X,position.Y,radius,cor);
+        //     Raylib.DrawCircle
+            
+        // }
+
+        public void Move(float x, float y)
         {
-            posX += x;
-            posY += y;
-            center.X = posX;
-            center.Y = posY;
+            // posX += x;
+            // posY += y;
+            // center.X = posX;
+            // center.Y = posY;
+            position += new Vector2(x,y);
             //center = new Vector2(posX,posY);
         }
         public void Destroy()
@@ -401,26 +456,12 @@ namespace engine
         public bool IsCollidingWithBall2D(Ball2D ball)
         {
             //Vector2 centro = new Vector2(posX,posY);
-            return Raylib.CheckCollisionCircles(this.center,this.radius,ball.center,ball.radius);
+            return Raylib.CheckCollisionCircles(this.position, this.radius, ball.position, ball.radius);
         }
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle)
         {
-            // if( this.posX + this.radius >= rectangle.PosX &&
-            //     this.posX + this.radius <= rectangle.PosX + rectangle.largura &&
-            //     this.posY + this.radius >= rectangle.PosY &&
-            //     this.posY + this.radius <= rectangle.PosY + rectangle.altura
-            // )
-            // {
-            //     return true;
-            // }
-            // return false;
-            // Vector2 centro = new Vector2(posX,posY);
-            if(Raylib.CheckCollisionCircleRec(this.center,this.radius,rectangle.rect))
-            {
-                DrawRectangleLinesEx(rectangle.rect,5,Color.GREEN);
-                return true;
-            }
-            return false;
+            Rectangle rect = new Rectangle(rectangle.position.X,rectangle.position.Y,rectangle.width,rectangle.height);
+            return Raylib.CheckCollisionCircleRec(this.position, this.radius, rect);
         }
         static public Ball2D GetNew(int x, int y, int radius, int r, int g, int b, int a )
         {
@@ -429,42 +470,38 @@ namespace engine
         }
     }
 
-	public class Rectangle2D : IControle, IPosicoes2D
-	{
-        
-		public int PosX { get; set; }
-		public int PosY { get; set; }
-        public int width, height;
+	public class Rectangle2D : IControler
+	{	
+		public Vector2 position { get; set; } 
+        public float width, height;
         Color cor;
-        public Rectangle rect;
-        public Rectangle2D(int largura, int altura, int r, int g, int b, int a )
+
+        public Rectangle2D(float width, float height, int r, int g, int b, int a )
         {
-            this.width = largura;
-            this.height = altura;
-            PosY = 0;
-            PosX = 0;
-            
-            rect = new Rectangle(PosX,PosY,largura,altura);
+            this.width = width;
+            this.height = height;
+            position = new Vector2(0,0);
+             
             cor = new Color(r,g,b,a);
         }
-        public Rectangle2D(int x, int y,int largura, int altura, int r, int g, int b, int a )
+        public Rectangle2D(float x, float y, float width, float height, int r, int g, int b, int a )
         {
-            PosX = x;
-            PosY = y;
-            this.width = largura;
-            this.height = altura;
+            position = new Vector2(x,y);
+            this.width = width;
+            this.height = height;
             cor = new Color(r,g,b,a);
         }
         public bool IsCollidingWithBall2D(Ball2D ball)
         {
-            return Raylib.CheckCollisionCircleRec(ball.center,ball.radius,this.rect);
+            Rectangle rect = new Rectangle(position.X,position.Y,width,height);
+            return Raylib.CheckCollisionCircleRec( ball.position, ball.radius, rect);
         }
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle)
         {
-            if( this.PosX + this.width >= rectangle.PosX &&
-                this.PosX <= rectangle.PosX + rectangle.width &&
-                this.PosY + this.height >= rectangle.PosY &&
-                this.PosY <= rectangle.PosY + rectangle.height
+            if( this.position.X + this.width >= rectangle.position.X &&
+                this.position.X <= rectangle.position.X + rectangle.width &&
+                this.position.Y + this.height >= rectangle.position.Y &&
+                this.position.Y <= rectangle.position.Y + rectangle.height
             )
             {
                 return true;
@@ -472,58 +509,51 @@ namespace engine
             return false;
         }
 
-		public void Destroy()
-		{
-			throw new NotImplementedException();
-		}
-
 		public void Draw()
 		{
-			DrawRectangle(PosX,PosY,width,height,cor);
+			//DrawRectangle(PosX,PosY,width,height,cor);
+            DrawRectangleV(position,new Vector2(width,height),cor);
             
             //DrawRectangleLinesEx(this.rect,10,Color.GREEN);
 		}
         public void DrawLines(Color color)
         {
-            DrawRectangleLines(PosX,PosY,width,height,color);
+            //DrawRectangleLines(PosX,PosY,width,height,color);
+            //Draretang
+            
         }   
 
-		public void Move(int x, int y)
+		public void Move(float x, float y)
 		{
-			PosX += x;
-            PosY += y;
-            rect.x = PosX;
-            rect.y = PosY;
+            position += new Vector2(x,y);
+			// PosX += x;
+            // PosY += y;
 		}
         public static Rectangle2D GetNew(int x, int y,int largura, int altura, int r, int g, int b, int a )
         {
             return new Rectangle2D(x,y,largura,altura,r,g,b,a);
         }
 	}
-	public interface IControle
+	public interface IControler
     {
-        public void Move(int x, int y);
+        public Vector2 position {get;set;}
+        public void Move(float x, float y);
         public void Draw();
     }
-    public interface IPosicoes2D
-    {
-        public int PosX 
-        {
-            get;
-            set;
-        }
-        public int PosY 
-        {
-            get;
-            set;
-        }
-    }
-
     public interface IColisions2D
     {
         public bool IsCollidingWithBall2D(Ball2D ball);
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle);
+    
     }
+    public interface IVelocity2D
+    {
+		public Vector2 Velocity { get; set; }
+	}
         
+    public interface IGravity2D
+    {
+        public float G {get;set;}
+    }
 }
 //salve
