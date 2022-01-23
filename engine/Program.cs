@@ -145,7 +145,6 @@ namespace engine
             Raylib.EndMode2D();
         }
 
-        
         public void CameraUpdate(Cam3D cam)
         {
             UpdateCamera(ref cam.camera);
@@ -168,7 +167,11 @@ namespace engine
         public void SetTitleWindow(string txt)
         {
             Raylib.SetWindowTitle(txt);
-
+        }
+        public void DrawTextInsideBox(string txt, Rectangle2D rectangle, float sizeFont, float spacim, bool wordWrap, Color color)
+        {
+            Rectangle rect = new Rectangle(rectangle.position.X,rectangle.position.Y,rectangle.width,rectangle.height);
+            Raylib.DrawTextRec(GetFontDefault(),txt,rect,sizeFont,spacim,wordWrap,color);
         }
         public void SetPositionWindow(int x, int y)
         {
@@ -206,6 +209,14 @@ namespace engine
         public Point2D GetNewPoint2D(Vector2 pos)
         {
             return new Point2D(pos);
+        }
+        public Ball2D GetNewBall2D(Vector2 center, float radius, Color cor)
+        {
+            return new Ball2D(center.X,center.Y,radius,cor.r,cor.g,cor.b,cor.a);
+        }
+        public Triangle2D GetNewTriangle2D(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
+        {
+            return new Triangle2D(v1, v2, v3, color);
         }
         public Vector2 AngleToNormalizedVector(float angle)
         {
@@ -431,6 +442,7 @@ namespace engine
         {
 
             Raylib.DrawCircleV(position,radius,cor);
+            //Raylib.DrawCircle()
  
         }
         // public void DrawLine()
@@ -470,6 +482,53 @@ namespace engine
         }
     }
 
+	public class Triangle2D : IColisions2D
+	{
+		public Vector2 p1 { get ; set ; }
+		public Vector2 p3 { get ; set ; }
+		public Vector2 p2 { get ; set ; }
+        Color color;
+        public Triangle2D(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
+        {
+            p1 = v1;
+            p2 = v2;
+            p3 = v3;
+            this.color = color;
+        }
+		public void Draw()
+		{
+			Raylib.DrawTriangle(p1,p2,p3,color);
+		}
+		public void DrawLines()
+		{
+			Raylib.DrawTriangleLines(p1,p2,p3,color);
+		}
+
+		public bool IsCollidingWithBall2D(Ball2D ball)
+		{
+			throw new NotImplementedException();
+		}
+
+		public bool IsCollidingWithRectangle2D(Rectangle2D rectangle)
+		{
+			throw new NotImplementedException();
+		}
+        public bool colisao()
+        {
+            return false;
+        }
+
+		public void Move(float x, float y)
+		{
+			p1 += new Vector2(x,y);
+			p2 += new Vector2(x,y);
+			p3 += new Vector2(x,y);
+		}
+        public void Rotate(int degress)
+        {
+
+        }
+	}
 	public class Rectangle2D : IControler
 	{	
 		public Vector2 position { get; set; } 
@@ -513,13 +572,15 @@ namespace engine
 		{
 			//DrawRectangle(PosX,PosY,width,height,cor);
             DrawRectangleV(position,new Vector2(width,height),cor);
-            
+
             //DrawRectangleLinesEx(this.rect,10,Color.GREEN);
 		}
-        public void DrawLines(Color color)
+        public void DrawLines(int lineThick, Color color)
         {
             //DrawRectangleLines(PosX,PosY,width,height,color);
             //Draretang
+            Rectangle rect = new Rectangle(position.X,position.Y,width,height);
+            Raylib.DrawRectangleLinesEx(rect,lineThick,color);
             
         }   
 
@@ -529,6 +590,10 @@ namespace engine
 			// PosX += x;
             // PosY += y;
 		}
+        public void MoveByMiddle(float x, float y)
+        {
+            position += new Vector2(x+width/2,y+height/2);
+        }
         public static Rectangle2D GetNew(int x, int y,int largura, int altura, int r, int g, int b, int a )
         {
             return new Rectangle2D(x,y,largura,altura,r,g,b,a);
