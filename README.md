@@ -24,5 +24,6 @@ To build by yourself just clone this repository and run `.\build_stuff\buildever
 
 # Games
 
-Agario: https://github.com/ussaohelcim/agario
+Asteroids: https://github.com/ussaohelcim/Asteroids  
+Agario: https://github.com/ussaohelcim/agario  
 PowerPong: https://github.com/ussaohelcim/PowerPong
