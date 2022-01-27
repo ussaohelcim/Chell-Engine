@@ -1,0 +1,1 @@
+Example showing a 3D model loaded from file with animation.

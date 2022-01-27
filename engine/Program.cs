@@ -218,6 +218,11 @@ namespace engine
         {
             return new Triangle2D(v1, v2, v3, color);
         }
+        public Object3D GetNewObject3D(string modelPath)
+        {
+           // Model m = LoadModel(modelPath);
+            return new Object3D(modelPath);
+        }
         public Vector2 AngleToNormalizedVector(float angle)
         {
             return new Vector2(MathF.Cos(angle),MathF.Sin(angle));
@@ -233,33 +238,48 @@ namespace engine
 
     }
     public class Program { public static void Main() { Console.WriteLine("hahahahahaha?"); } }
-    public class Object3D
+    public unsafe class Object3D
     {
         public Model model;
-
+        public ModelAnimation* animations;
+        public int animsCount = 0;
         public Vector3 position;
-        Vector3 rotation;
+        public Vector3 rotation;
         Texture2D texture;
         public float size;
 
-        public Object3D(Model model)
+        public Object3D(string modelPath)
         {
-            this.model = model;
+            this.model = LoadModel(modelPath);
             this.size = 1;
-            this.position = new Vector3(0,0,0);
+            this.position = new Vector3(0,0,0); 
+            AdicionarAnimacoes(modelPath);
+        }
+        void AdicionarAnimacoes(string modelPath)
+        {
+
+            IntPtr animsPtr = LoadModelAnimations(modelPath, ref animsCount);
+            animations = (ModelAnimation*)animsPtr.ToPointer();
+            
+        }
+        public int GetAnimationFrameCount(int numAnimation)
+        {
+            return animations[numAnimation].frameCount;
+        }
+        public void Animate(int numAnimacao, int frame)
+        {
+            //if(frame >= animations->frameCount) frame = 0;
+            
+            UpdateModelAnimation(model,animations[numAnimacao],frame);
         }
         public Object3D(Model model,float scale, float x, float y, float z)
         {
             this.model = model;
             this.position = new Vector3(x,y,z);
         }
-        public static Object3D GetNew(Model model,float scale, float x, float y, float z)
+        public static Object3D GetNew(string modelPath)
         {
-            return new Object3D(model,scale,x,y,z);
-        }
-        public static Object3D GetNew(Model model)
-        {
-            return new Object3D(model);
+            return new Object3D(modelPath);
         }
         public void Draw()
         {
@@ -269,9 +289,14 @@ namespace engine
         {
             Raylib.DrawModelWires(this.model,this.position,this.size,Color.GREEN);
         }
-        public void Rotate(float x, float y, float z)
+        public void Rotate(Vector3 degrees)
         {
-            model.transform = Raymath.MatrixRotateXYZ(new Vector3(x * DEG2RAD, y* DEG2RAD,z* DEG2RAD));
+
+        }
+        public void Rotate(float xDegrees, float yDegrees, float zDegrees)
+        {
+            rotation = new Vector3(xDegrees * DEG2RAD, yDegrees * DEG2RAD,zDegrees * DEG2RAD);
+            model.transform = Raymath.MatrixRotateXYZ(rotation);
         }
     }
     public class Cam3D
@@ -481,9 +506,26 @@ namespace engine
             return bolinha;
         }
     }
+    public class Triangle3D
+    {
+        public Vector3 origin;
+        public Vector3 v1, v2, v3;
+        public Color color;
+        Model mode;
+        Mesh a = GenMeshPoly(3,5);
+        void Draw()
+        {
+            Raylib.DrawTriangle3D(v1,v2,v3,color);
+        }
+        void Rotate()
+        {
+            Quaternion q = Raymath.QuaternionFromEuler(5,0,0);
+        }
+    }
 
 	public class Triangle2D : IColisions2D
 	{
+        public Vector2 pivot;
 		public Vector2 p1 { get ; set ; }
 		public Vector2 p3 { get ; set ; }
 		public Vector2 p2 { get ; set ; }
@@ -524,9 +566,9 @@ namespace engine
 			p2 += new Vector2(x,y);
 			p3 += new Vector2(x,y);
 		}
-        public void Rotate(int degress)
+        public void Rotate(float degress)
         {
-
+           // Raymath.Vector2Rotate()
         }
 	}
 	public class Rectangle2D : IControler
@@ -604,12 +646,17 @@ namespace engine
         public Vector2 position {get;set;}
         public void Move(float x, float y);
         public void Draw();
+        
     }
     public interface IColisions2D
     {
         public bool IsCollidingWithBall2D(Ball2D ball);
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle);
     
+    }
+    public interface IColisions3D
+    {
+
     }
     public interface IVelocity2D
     {
@@ -618,7 +665,9 @@ namespace engine
         
     public interface IGravity2D
     {
+  
         public float G {get;set;}
+        public void PuxarGravidade();
     }
 }
 //salve
