@@ -214,6 +214,10 @@ namespace engine
         {
             return new Ball2D(center.X,center.Y,radius,cor.r,cor.g,cor.b,cor.a);
         }
+        public Cam3D GetCam3D()
+        {
+            return new Cam3D();
+        }   
         public Triangle2D GetNewTriangle2D(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
         {
             return new Triangle2D(v1, v2, v3, color);
@@ -223,6 +227,19 @@ namespace engine
            // Model m = LoadModel(modelPath);
             return new Object3D(modelPath);
         }
+        public Line3D GetNewLine3D(Vector3 p1, Vector3 p2, Color color)
+        {
+            return new Line3D(p1,p2,color);
+        }
+        public Point3D GetNewPoint3D(Vector3 pos)
+        {
+            return new Point3D(pos);
+        }
+        public Raylib_cs.Ray GetNewRay(Vector3 origin, Vector3 direction)
+        {
+            return new Ray(origin,direction);
+        }
+        
         public Vector2 AngleToNormalizedVector(float angle)
         {
             return new Vector2(MathF.Cos(angle),MathF.Sin(angle));
@@ -236,6 +253,7 @@ namespace engine
             return Raylib.GetFrameTime();
         }
 
+
     }
     public class Program { public static void Main() { Console.WriteLine("hahahahahaha?"); } }
     public unsafe class Object3D
@@ -247,10 +265,16 @@ namespace engine
         public Vector3 rotation;
         Texture2D texture;
         public float size;
+        public BoundingBox collider;
 
         public Object3D(string modelPath)
         {
+            
             this.model = LoadModel(modelPath);
+
+            this.collider = Raylib.MeshBoundingBox(GenMeshCube(1,2,1));
+            
+            // collider = Gen
             this.size = 1;
             this.position = new Vector3(0,0,0); 
             AdicionarAnimacoes(modelPath);
@@ -270,6 +294,7 @@ namespace engine
         {
             //if(frame >= animations->frameCount) frame = 0;
             
+            
             UpdateModelAnimation(model,animations[numAnimacao],frame);
         }
         public Object3D(Model model,float scale, float x, float y, float z)
@@ -277,17 +302,19 @@ namespace engine
             this.model = model;
             this.position = new Vector3(x,y,z);
         }
-        public static Object3D GetNew(string modelPath)
-        {
-            return new Object3D(modelPath);
-        }
+
         public void Draw()
         {
+            
             Raylib.DrawModel(this.model, this.position, size, Color.WHITE);
         }
         public void DrawWire()
         {
             Raylib.DrawModelWires(this.model,this.position,this.size,Color.GREEN);
+        }
+        public void DrawCollider()
+        {
+            Raylib.DrawCubeWires(position,1,2,1,Color.GREEN);
         }
         public void Rotate(Vector3 degrees)
         {
@@ -298,31 +325,119 @@ namespace engine
             rotation = new Vector3(xDegrees * DEG2RAD, yDegrees * DEG2RAD,zDegrees * DEG2RAD);
             model.transform = Raymath.MatrixRotateXYZ(rotation);
         }
+        public void SetPosition(Vector3 pos)
+        {
+            //model.transform.Translation += pos;
+            //model.transform = Raymath.MatrixTra//Matrix4x4.CreateTranslation(pos);
+            position = pos;
+            Matrix4x4 m =  Raymath.MatrixTranslate(pos.X,pos.Y,pos.Z);
+        
+            model.transform += m;
+           // Matrix4x4 a = new Matrix4x4();
+        }
+        public Vector3 PosModelo()
+        {
+            return model.transform.Translation;
+        }
+    }
+    public class Cube3D
+    {
+        public Vector3 position;
+        Mesh mesh;
+        public Cube3D(float w, float h, float l)
+        {
+            mesh = GenMeshCube(w,h,l);
+            
+        }
+        public void Draw()
+        {
+            
+        }
+    }
+    public class Particle3D
+    {
+        public Vector3 position;
+        
+        public Particle3D(Vector3 pos, int amount)
+        {
+            position = pos;
+            
+        }
+
+        public void Play()
+        {
+            
+        }
+        public void Draw()
+        {
+            //Raylib.DrawCircle3D(center,radius,rotationAxis,rotationAngle,color)
+        }
     }
     public class Cam3D
     {
         public Camera3D camera;
-        public Cam3D(float fovY)
+        public Mesh mesh;
+        
+        public Matrix4x4 transform;
+        public Cam3D()
         {
+            
             camera = new Camera3D();
             camera.fovy = 90;
             camera.up = Vector3.UnitY;
             camera.projection = CameraProjection.CAMERA_PERSPECTIVE;
-            camera.target = Vector3.Zero;
+            camera.target = Vector3.UnitZ * 10;
+            transform = new Matrix4x4();
+            mesh = GenMeshSphere(2,2,2);
+            
+        }
+        public void UpdateTarget(Vector3 target)
+        {
+            camera.target = target;
+        }
+        public void UpdateTarget()
+        {
+            camera.target = camera.position + Vector3.UnitZ * 10;
+            
+        }
+        public void UpdatePosition(Vector3 position)
+        {
+            camera.position = position;
+        }
+        public void UpdateFov(float fov)
+        {
+            camera.fovy = fov;
+        }
+        public void UpdateUp(Vector3 upDirection)
+        {
+            camera.up = upDirection;
         }
         public void Rotate(float x, float y, float z)
         {
-            Quaternion q = Quaternion.CreateFromYawPitchRoll(x,y,z);
-            //camera.position = Raymath.MatrixRotateXYZ(new Vector3(x * DEG2RAD, y* DEG2RAD,z* DEG2RAD)) * camera.position;
+            //Quaternion q = Quaternion.CreateFromYawPitchRoll(y,x,z);
+            Quaternion q = Raymath.QuaternionFromEuler(y,x,z);
+            //camera.position = Raymath.MatrixRotateXYZ(new Vector3(x * DEG2RAD, y* DEG2RAD,z* DEG2RAD));
+            //transform = Raymath.MatrixRotateXYZ(new Vector3(x * DEG2RAD, y* DEG2RAD,z* DEG2RAD));
+            Vector3 inicio = Vector3.UnitZ * 10;
+            Vector3 dir = Raymath.Vector3RotateByQuaternion(inicio,q);
+            
+
+            camera.target = camera.position + dir;
+
         }
-        public void Move(float x, float y, float z)
+        public void Move(Vector3 dir, float num)
         {
-            camera.position += new Vector3(x,y,z);
+            //camera.target += Raymath.Vector3Normalize(dir) * num;
+            transform = Raymath.MatrixTranslate(dir.X,dir.Y,dir.Z);
+            
+           
+            camera.position += Raymath.Vector3Normalize(dir) * num;
+            UpdateTarget();
+
         }
-        public static Cam3D GetNew(float fovY)
-        {
-            return new Cam3D(fovY);
-        }
+
+
+
     }
     public class Cam2D
     {
@@ -406,6 +521,42 @@ namespace engine
         {
             Raylib.DrawLineEx(p1.position, p2.position, thick, color);
         }
+    }
+    
+    public class Line3D
+    {
+        public Point3D p1, p2;
+        Color color;
+
+        public Line3D( Vector3 p1, Vector3 p2, Color color)
+        {
+            this.color = color;
+            this.p1 = new Point3D(p1);
+            this.p2 = new Point3D(p2);
+        }
+        public void Draw()
+        {
+            Raylib.DrawLine3D(p1.position,p2.position,color);
+            //Raylib.DrawLineV( p1.position, p2.position, color);
+        }
+
+    }
+    public class Point3D
+    {
+        public Vector3 position;
+        public Point3D(Vector3 pos)
+        {
+            position = pos;
+        }
+        public void Move(float x, float y, float z)
+        {
+            position += new Vector3(x,y,z);
+        }
+        public void Draw()
+        {
+            Raylib.DrawPoint3D(position,Color.BLACK);
+        }
+
     }
     public class Sprite : IControler
     {
