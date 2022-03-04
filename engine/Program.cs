@@ -2,6 +2,15 @@
 using Raylib_cs;
 using System.Numerics;
 using System.Collections.Generic;
+
+using Jitter;
+using Jitter.Collision;
+using Jitter.Dynamics;
+using Jitter.DataStructures;
+using Jitter.LinearMath;
+using Jitter.Dynamics.Constraints;
+using Jitter.Collision.Shapes;
+
 namespace engine
 {
     using static Raylib;
@@ -171,7 +180,8 @@ namespace engine
         public void DrawTextInsideBox(string txt, Rectangle2D rectangle, float sizeFont, float spacim, bool wordWrap, Color color)
         {
             Rectangle rect = new Rectangle(rectangle.position.X,rectangle.position.Y,rectangle.width,rectangle.height);
-            Raylib.DrawTextRec(GetFontDefault(),txt,rect,sizeFont,spacim,wordWrap,color);
+            //Raylib.DrawTextRec(GetFontDefault(),txt,rect,sizeFont,spacim,wordWrap,color);
+            // Raylib.Drawtext
         }
         public void SetPositionWindow(int x, int y)
         {
@@ -252,10 +262,222 @@ namespace engine
         {
             return Raylib.GetFrameTime();
         }
-
+        public BoxShape GetNewBoxShape(float lenght, float height, float width)
+        {       
+            return new BoxShape(lenght,height,width);
+        }
+        public SphereShape GetNewSphereShape(float radius)
+        {
+            
+            return new SphereShape(radius);
+        }
+        public CylinderShape GetNewCylinderShape(float height, float radius)
+        {
+            return new CylinderShape(height,radius);
+        }
+        public RigidBody GetNewRigidBody(Shape shape)
+        {
+            return new RigidBody(shape);
+        }
+        public CollisionSystem GetNewCollisionSystem()
+        {
+            return new CollisionSystemSAP();
+        }
+        public World GetNewWolrd(CollisionSystem collisionSystem)
+        {
+            return new World(collisionSystem);
+        }
 
     }
-    public class Program { public static void Main() { Console.WriteLine("hahahahahaha?"); } }
+
+    // public class Program { public static void Main() {  }  }
+    public class QuadTree
+    {
+        public Rectangle2D rectangle;
+        public QuadTree [] subdivisions;
+        public List<Vector2> points;
+        int maxDepth;
+        public QuadTree(Rectangle2D rectangle2D, int capacity, int maxDepth)
+        {
+            points = new List<Vector2>(capacity);
+            rectangle = rectangle2D;
+            this.maxDepth = maxDepth;
+        }
+
+        public bool Contains(Vector2 point)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if(points[i] == point)
+                {
+                    return true;
+                } 
+            }
+            return false;
+        }
+        public bool IsPointInsideThisRectangle(Vector2 point)
+        {
+            return rectangle.IsPointInside(point);
+        }
+        public bool UpdatePoint(Vector2 oldPoint, Vector2 newPoint, QuadTree root)
+        {
+            if(Contains(oldPoint) && rectangle.IsPointInside(newPoint))
+            {// se esse quadtree tem o oldpoint e o novo ponto é dentro do retangulo
+                for (int i = 0; i < points.Count; i++)
+                {
+                    if(points[i] == oldPoint)
+                    {
+                        points[i] = newPoint;
+                        return true;
+                    } 
+                }
+            }
+			else{
+				Move(oldPoint,newPoint,root);
+				//Console.WriteLine("Era pra mover");
+			}
+                    
+            return false;
+        }
+        public bool Move(Vector2 point, Vector2 newPoint, QuadTree root)
+        {
+			QuadTree qt = root.GetQuadTreeWithThisPoint(newPoint);
+			if(qt != null)
+			{
+				Remove(point);
+				qt.Insert(newPoint);
+				return true;
+			}
+            return false;
+        }
+        public bool Remove(Vector2 point)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if(point == points[i])
+                {
+                    points.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            if(subdivisions != null)
+            {
+                for (int i = 0; i < subdivisions.Length; i++)
+                {
+                    if(subdivisions[i].Remove(point))
+                    {
+                        return true;
+                    }
+                }
+            }
+    
+            return false;
+        }
+        public QuadTree GetQuadTreeWithThisPoint(Vector2 point)
+        {
+            if(rectangle.IsPointInside(point) && subdivisions == null)
+            {
+                return this;
+            }
+            else
+            {
+				if(subdivisions != null)
+				{
+					foreach (QuadTree qt in subdivisions)
+					{
+						if(qt.IsPointInside(point))
+						{
+							return qt.GetQuadTreeWithThisPoint(point);
+						}
+					}
+				}
+                
+            }
+            return null;
+        }
+        public bool Insert(Vector2 point)
+        {
+            if(!rectangle.IsPointInside(point))
+            {
+                return false;
+            }
+            if(points.Count < points.Capacity && subdivisions == null)
+            {
+                points.Add(point);
+                return true;
+            }
+
+            if(subdivisions == null && maxDepth > 0)
+            {
+               Subdivide();
+            }
+            
+            if      (subdivisions[0].Insert(point)) return true;
+            else if (subdivisions[1].Insert(point)) return true;
+            else if (subdivisions[2].Insert(point)) return true;
+            else if (subdivisions[3].Insert(point)) return true;
+
+            return false;
+        }
+        
+        bool IsPointInside(Vector2 point)
+        {
+            return rectangle.IsPointInside(point);
+        }
+        void Subdivide()
+        {
+
+            float metadeLargura = rectangle.width / 2;
+            float metadeAltura = rectangle.height / 2;
+
+            subdivisions = new QuadTree[4];
+
+            subdivisions[0] = new QuadTree(
+                new Rectangle2D(
+                    rectangle.position.X,
+                    rectangle.position.Y,
+                    metadeLargura,
+                    metadeAltura
+                ),points.Capacity, maxDepth-1
+            );
+            subdivisions[1] = new QuadTree(
+                new Rectangle2D(
+                    rectangle.position.X + metadeAltura,
+                    rectangle.position.Y,
+                    metadeLargura*2,
+                    metadeAltura
+                ),points.Capacity, maxDepth-1
+            );
+            subdivisions[2] = new QuadTree(
+                new Rectangle2D(
+                    rectangle.position.X,
+                    rectangle.position.Y+metadeAltura,
+                    metadeLargura,
+                    metadeAltura*2
+                ),points.Capacity, maxDepth-1
+            );
+            subdivisions[3] = new QuadTree(
+                new Rectangle2D(
+                    rectangle.position.X+metadeAltura,
+                    rectangle.position.Y+metadeAltura,
+                    metadeLargura*2,
+                    metadeAltura*2
+                ),points.Capacity, maxDepth-1
+            );
+
+            foreach (Vector2 point in points)
+            {
+                if      (subdivisions[0].Insert(point)) continue;
+                else if (subdivisions[1].Insert(point)) continue;
+                else if (subdivisions[2].Insert(point)) continue;
+                else if (subdivisions[3].Insert(point)) continue;
+            }
+			
+            points.Clear();
+        }
+    }
+    
     public unsafe class Object3D
     {
         public Model model;
@@ -272,7 +494,7 @@ namespace engine
             
             this.model = LoadModel(modelPath);
 
-            this.collider = Raylib.MeshBoundingBox(GenMeshCube(1,2,1));
+            this.collider = Raylib.GetMeshBoundingBox(GenMeshCube(1,2,1)); // Raylib.MeshBoundingBox(GenMeshCube(1,2,1));
             
             // collider = Gen
             this.size = 1;
@@ -282,8 +504,8 @@ namespace engine
         void AdicionarAnimacoes(string modelPath)
         {
 
-            IntPtr animsPtr = LoadModelAnimations(modelPath, ref animsCount);
-            animations = (ModelAnimation*)animsPtr.ToPointer();
+            // IntPtr animsPtr = LoadModelAnimations(modelPath, ref animsCount);
+            // animations = (ModelAnimation*)animsPtr.ToPointer();
             
         }
         public int GetAnimationFrameCount(int numAnimation)
@@ -743,6 +965,13 @@ namespace engine
             this.height = height;
             cor = new Color(r,g,b,a);
         }
+        public Rectangle2D(float x, float y, float width, float height)
+        {
+            position = new Vector2(x,y);
+            this.width = width;
+            this.height = height;
+            cor = Color.WHITE;
+        }
         public bool IsCollidingWithBall2D(Ball2D ball)
         {
             Rectangle rect = new Rectangle(position.X,position.Y,width,height);
@@ -759,6 +988,11 @@ namespace engine
                 return true;
             }
             return false;
+        }
+        public bool IsPointInside(Vector2 point)
+        {
+            Rectangle rect = new Rectangle(position.X,position.Y,width,height);
+            return Raylib.CheckCollisionPointRec(point,rect);
         }
 
 		public void Draw()
@@ -792,6 +1026,26 @@ namespace engine
             return new Rectangle2D(x,y,largura,altura,r,g,b,a);
         }
 	}
+    public static class Extensions
+    {
+        public static Vector3 toVector3(this JVector vector)
+        {
+            return new Vector3(vector.X,vector.Y,vector.Z);
+        } 
+        public static Quaternion toQuaternion(this JQuaternion quaternion)
+        {
+            return new Quaternion(quaternion.X,quaternion.Y,quaternion.Z,quaternion.W);
+        }
+        public static Matrix4x4 toMatrix4x4(this JMatrix matrix)
+        {
+            return new Matrix4x4(
+                matrix.M11, matrix.M12, matrix.M13, 0.0f,
+                matrix.M21, matrix.M22, matrix.M23, 0.0f,
+                matrix.M31, matrix.M32, matrix.M33, 0.0f, 
+                0.0f,       0.0f,       0.0f,       1.0f
+            );
+        }
+    }
 	public interface IControler
     {
         public Vector2 position {get;set;}
@@ -805,20 +1059,6 @@ namespace engine
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle);
     
     }
-    public interface IColisions3D
-    {
 
-    }
-    public interface IVelocity2D
-    {
-		public Vector2 Velocity { get; set; }
-	}
-        
-    public interface IGravity2D
-    {
-  
-        public float G {get;set;}
-        public void PuxarGravidade();
-    }
 }
 //salve
