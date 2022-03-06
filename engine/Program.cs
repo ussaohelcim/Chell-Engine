@@ -16,7 +16,8 @@ namespace engine
     using static Raylib;
     public class Functions 
     {
-        
+        public const float PI = MathF.PI;
+        public const float TAU = PI * 2;
         Random r = new Random();
         
         public Functions() {}
@@ -287,6 +288,26 @@ namespace engine
         {
             return new World(collisionSystem);
         }
+        public QuadTree GetNewQuadTree(Rectangle2D rectangle2D, int capacity, int maxDepth)
+        {
+            return new QuadTree(rectangle2D,capacity,maxDepth);
+        }
+        public Vector2 GetMousePosition()
+        {
+            return Raylib.GetMousePosition();
+        }
+        public float Vectors2Angle(Vector2 v1, Vector2 v2)
+        {
+            return MathF.Atan2(v2.Y- v1.Y, v2.X - v1.X);
+        }
+        public float Deg2Rad(float degrees)
+        {
+            return degrees * PI / 180;
+        }
+        public float Rad2Deg(float radians)
+        {
+            return radians * RAD2DEG;
+        }
 
     }
 
@@ -374,6 +395,17 @@ namespace engine
     
             return false;
         }
+        public QuadTree [] GetQuadTreesNearThisPoint(Vector2 point, float radius)
+        {
+            List<QuadTree> lista = new List<QuadTree>();
+            
+            lista.Add(GetQuadTreeWithThisPoint(new Vector2(point.X, point.Y + radius)));
+            lista.Add(GetQuadTreeWithThisPoint(new Vector2(point.X, point.Y - radius)));
+            lista.Add(GetQuadTreeWithThisPoint(new Vector2(point.X + radius, point.Y)));
+            lista.Add(GetQuadTreeWithThisPoint(new Vector2(point.X - radius, point.Y)));
+            
+            return lista.ToArray();
+        }
         public QuadTree GetQuadTreeWithThisPoint(Vector2 point)
         {
             if(rectangle.IsPointInside(point) && subdivisions == null)
@@ -386,7 +418,7 @@ namespace engine
 				{
 					foreach (QuadTree qt in subdivisions)
 					{
-						if(qt.IsPointInside(point))
+						if(qt.rectangle.IsPointInside(point))
 						{
 							return qt.GetQuadTreeWithThisPoint(point);
 						}
@@ -420,10 +452,37 @@ namespace engine
 
             return false;
         }
-        
+        public List<Vector2> Query()
+        {
+            return points;
+        }
         bool IsPointInside(Vector2 point)
         {
             return rectangle.IsPointInside(point);
+        }
+        
+        public void Refresh()
+        {
+            // clear empty subdivisions
+            // TODO = if capacity == all points inside subdivision, move points to parent
+            int cleans = 0;
+            if(subdivisions != null)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    subdivisions[i].Refresh();
+
+                    if( subdivisions[i].points.Count <= 0 &&
+                        subdivisions[i].subdivisions == null )
+                    {
+                        cleans++;
+                    }
+                }
+            }
+            if(cleans == 4)
+            {
+                subdivisions = null;   
+            }
         }
         void Subdivide()
         {
@@ -445,7 +504,7 @@ namespace engine
                 new Rectangle2D(
                     rectangle.position.X + metadeAltura,
                     rectangle.position.Y,
-                    metadeLargura*2,
+                    metadeLargura,
                     metadeAltura
                 ),points.Capacity, maxDepth-1
             );
@@ -454,15 +513,15 @@ namespace engine
                     rectangle.position.X,
                     rectangle.position.Y+metadeAltura,
                     metadeLargura,
-                    metadeAltura*2
+                    metadeAltura
                 ),points.Capacity, maxDepth-1
             );
             subdivisions[3] = new QuadTree(
                 new Rectangle2D(
                     rectangle.position.X+metadeAltura,
                     rectangle.position.Y+metadeAltura,
-                    metadeLargura*2,
-                    metadeAltura*2
+                    metadeLargura,
+                    metadeAltura
                 ),points.Capacity, maxDepth-1
             );
 
@@ -718,7 +777,7 @@ namespace engine
 		{
 			throw new NotImplementedException();
 		}
-
+        
 		public bool IsCollidingWithRectangle2D(Rectangle2D rectangle)
 		{
             Rectangle rect = new Rectangle(rectangle.position.X, rectangle.position.Y, rectangle.width, rectangle.height);
@@ -791,36 +850,25 @@ namespace engine
         public Sprite(string path)
         {
             Image img = LoadImage(path);
+            
             textura = LoadTextureFromImage(img);
             UnloadImage(img);
             rectangle = new Rectangle2D(textura.width,textura.height,254,254,254,254);
             
         }
-        
-		public void Destroy()
-		{
-			throw new NotImplementedException();
-		}
 
 		public void Draw()
 		{
-            //DrawTextureEx(textura,)
-            // Vector2 pos = new Vector2(rectangle.PosX,rectangle.PosY);
-			//DrawTexture(textura, , , Color.WHITE);
             Raylib.DrawTextureEx(textura, rectangle.position, rotation, scale, Color.WHITE);
 		}
         public void UpdatePosition(int x, int y)
         {
             rectangle.position = new Vector2(x,y);
-            // rectangle.PosX= x;
-            // rectangle.PosY= y;
         }
 
 		public void Move(float x, float y)
 		{
             rectangle.position += new Vector2(x,y);
-			// rectangle.PosX += x;
-            // rectangle.PosY += y;
 		}
 	}
     public class Ball2D : IControler
@@ -838,31 +886,18 @@ namespace engine
         }
         public void Draw()
         {
-
             Raylib.DrawCircleV(position,radius,cor);
-            //Raylib.DrawCircle()
- 
         }
-        // public void DrawLine()
-        // {
-        //     Raylib.DrawCircleLines(position.X,position.Y,radius,cor);
-        //     Raylib.DrawCircle
-            
-        // }
+        public void DrawLine()
+        {
+            Raylib.DrawCircleLines((int)position.X,(int)position.Y,radius,cor);            
+        }
 
         public void Move(float x, float y)
         {
-            // posX += x;
-            // posY += y;
-            // center.X = posX;
-            // center.Y = posY;
             position += new Vector2(x,y);
-            //center = new Vector2(posX,posY);
         }
-        public void Destroy()
-        {
-            
-        }
+
         public bool IsCollidingWithBall2D(Ball2D ball)
         {
             //Vector2 centro = new Vector2(posX,posY);
@@ -873,12 +908,8 @@ namespace engine
             Rectangle rect = new Rectangle(rectangle.position.X,rectangle.position.Y,rectangle.width,rectangle.height);
             return Raylib.CheckCollisionCircleRec(this.position, this.radius, rect);
         }
-        static public Ball2D GetNew(int x, int y, int radius, int r, int g, int b, int a )
-        {
-            Ball2D bolinha = new Ball2D(x,y,radius,r,g,b,a);
-            return bolinha;
-        }
-    }
+
+	}
     public class Triangle3D
     {
         public Vector3 origin;
@@ -932,7 +963,10 @@ namespace engine
         {
             return false;
         }
-
+        public bool IsPointInside(Vector2 point)
+        {
+            throw new NotImplementedException();
+        }
 		public void Move(float x, float y)
 		{
 			p1 += new Vector2(x,y);
@@ -1007,6 +1041,7 @@ namespace engine
             //DrawRectangleLines(PosX,PosY,width,height,color);
             //Draretang
             Rectangle rect = new Rectangle(position.X,position.Y,width,height);
+            //Raylib.DrawRectangleLinesEx(rect,lineThick,color);
             Raylib.DrawRectangleLinesEx(rect,lineThick,color);
             
         }   
@@ -1025,6 +1060,11 @@ namespace engine
         {
             return new Rectangle2D(x,y,largura,altura,r,g,b,a);
         }
+
+		public void MoveToDirection(Vector2 target, float speed)
+		{
+			throw new NotImplementedException();
+		}
 	}
     public static class Extensions
     {
@@ -1045,18 +1085,31 @@ namespace engine
                 0.0f,       0.0f,       0.0f,       1.0f
             );
         }
+        public static JMatrix toJMatrix(this Matrix4x4 matrix)
+        {
+            return new JMatrix(
+                matrix.M11, matrix.M12, matrix.M13,
+                matrix.M21, matrix.M22, matrix.M23,
+                matrix.M31, matrix.M32, matrix.M33 
+            );
+        }
+        public static JVector toJVector(this Vector3 vector)
+        {
+            return new JVector(vector.X,vector.Y,vector.Z);
+        }
     }
 	public interface IControler
     {
         public Vector2 position {get;set;}
         public void Move(float x, float y);
         public void Draw();
-        
+           
     }
     public interface IColisions2D
     {
         public bool IsCollidingWithBall2D(Ball2D ball);
         public bool IsCollidingWithRectangle2D(Rectangle2D rectangle);
+        //public bool IsPointInside(Vector2 point);
     
     }
 
